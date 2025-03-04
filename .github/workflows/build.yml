@@ -123,8 +123,7 @@ jobs:
 
     - name: Flet Build Windows
       run: |
-        flet build windows --verbose --no-rich-output
-
+        flet build windows
     - name: Upload Windows Artifact
       uses: actions/upload-artifact@v4.3.4
       with:
@@ -165,7 +164,7 @@ jobs:
 
     - name: Flet Build APK
       run: |
-        flet build apk --verbose --no-rich-output
+        flet build apk
 
     - name: Upload APK Artifact
       uses: actions/upload-artifact@v4.3.4
