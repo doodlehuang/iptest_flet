@@ -34,7 +34,8 @@ jobs:
       run: |
         pip install -r requirements.txt
         flet build ipa
-        mv build/ipa/app.ipa app-release.ipa
+        ls -la build/ipa
+        mv build/ipa/app-release.ipa app-release.ipa
         
     - name: Upload IPA Artifact
       uses: actions/upload-artifact@v4
