@@ -1,4 +1,4 @@
-name: Build Android App
+name: Build iOS App
 
 on:
   push:
@@ -11,7 +11,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     
     steps:
     - uses: actions/checkout@v4
@@ -21,30 +21,26 @@ jobs:
       with:
         python-version: '3.12'
         
-    - name: Set up Java
-      uses: actions/setup-java@v4
+    - name: Install Xcode
+      uses: maxim-lobanov/setup-xcode@v1
       with:
-        distribution: 'temurin'
-        java-version: '17'
+        xcode-version: latest-stable
         
-    - name: Set up Android SDK
-      uses: android-actions/setup-android@v3
-        
-    - name: Build Android App
+    - name: Build iOS App
       run: |
         pip install -r requirements.txt
-        flet build apk
-        mv build/apk/app-release.apk app-release.apk
+        flet build ipa
+        mv build/ios/ipa/app.ipa app-release.ipa
         
-    - name: Upload APK Artifact
+    - name: Upload IPA Artifact
       uses: actions/upload-artifact@v4
       with:
-        name: app-release
-        path: app-release.apk
-
+        name: app-release-ios
+        path: app-release.ipa
+        
     - name: Create Release
       if: startsWith(github.ref, 'refs/tags/')
       uses: softprops/action-gh-release@v1
       with:
-        files: app-release.apk
+        files: app-release.ipa
         generate_release_notes: true 

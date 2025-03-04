@@ -59,14 +59,14 @@ class AsyncWorker:
         for url in urls:
             for _ in range(2):
                 try:
-                    async with self.session.get(url, timeout=0.5) as response:
+                    async with self.session.head(url, timeout=0.5) as response:
                         if response.status in [204, 200]:
                             success_count += 1
                             break
                 except:
                     continue
 
-        return f"自由（{success_count}/{len(urls)}）" if success_count >= 2 else "受限"
+        return f"自由（{success_count}/{len(urls)}）" if success_count >= len(urls)/2 else "受限"
 
     async def extract_prefdomain_url(self):
         try:
@@ -122,18 +122,25 @@ class AsyncWorker:
 
 async def main(page: ft.Page):
     page.title = "网络状态检测工具"
-    page.window_width = 800
-    page.window_height = 800
+    page.window.height = 700
     page.theme_mode = ft.ThemeMode.LIGHT
-    page.padding = 20
+    page.padding = 0
+
+    # 计算窗口宽度
+    content_width = 400  # 内容区域最大宽度
+    window_width = content_width + 40  # 加上内容区域的左右padding (20 * 2)
+    page.window.width = window_width
 
     # 创建显示控件
     ip_info = ft.Text(size=16, selectable=True)
     network_status = ft.Text(size=16)
     google_region = ft.Text(size=16)
     github_speed = ft.Text(size=16)
-    academic_info = ft.Text(size=16)
-    progress_ring = ft.ProgressRing(visible=False)
+    academic_info = ft.Container(visible=False)
+    
+    # 创建加载指示器
+    ip_loading = ft.ProgressRing(width=20, height=20, visible=False)
+    network_loading = ft.ProgressRing(width=20, height=20, visible=False)
 
     # 用于存储IP信息的变量
     ip_data = {}
@@ -149,12 +156,12 @@ async def main(page: ft.Page):
         else:
             if "ip" in ip_data:
                 ip_display = ip_data['ip'] if show_full_ip else mask_ip(ip_data['ip'])
-                ip_info.value = f"IP地址：{ip_display}（{ip_data['region']}）"
+                ip_info.value = f"IP地址：\n{ip_display}（{ip_data['region']}）"
             else:
                 domestic_ip_display = ip_data['domestic_ip'] if show_full_ip else mask_ip(ip_data['domestic_ip'])
                 foreign_ip_display = ip_data['foreign_ip'] if show_full_ip else mask_ip(ip_data['foreign_ip'])
-                ip_info.value = f"IP地址（面向国内网站）：{domestic_ip_display}（{ip_data['domestic_region']}）\n" \
-                               f"IP地址（面向国外网站）：{foreign_ip_display}（{ip_data['foreign_region']}）"
+                ip_info.value = f"IP地址（面向国内网站）：\n{domestic_ip_display}（{ip_data['domestic_region']}）\n" \
+                               f"IP地址（面向国外网站）：\n{foreign_ip_display}（{ip_data['foreign_region']}）"
         page.update()
 
     def toggle_ip_display(e):
@@ -171,17 +178,17 @@ async def main(page: ft.Page):
         page.show_snack_bar(ft.SnackBar(content=ft.Text("IP地址已复制到剪贴板")))
 
     async def refresh_data(e):
-        # 禁用刷新按钮并显示进度环
+        # 禁用刷新按钮并显示加载指示器
         refresh_btn.disabled = True
-        progress_ring.visible = True
-        page.update()
-
-        # 更新所有状态文本为"正在刷新..."
-        ip_info.value = "获取IP信息中..."
-        network_status.value = "正在刷新..."
-        google_region.value = "正在刷新..."
-        github_speed.value = "正在刷新..."
-        academic_info.value = "正在刷新..."
+        ip_loading.visible = True
+        network_loading.visible = True
+        
+        # 清空现有内容
+        ip_info.value = ""
+        network_status.value = ""
+        google_region.value = ""
+        github_speed.value = ""
+        academic_info.visible = False
         page.update()
 
         # 创建worker并运行检查
@@ -193,15 +200,35 @@ async def main(page: ft.Page):
         ip_data = results["ip_info"]
         update_ip_display()
         
+        # 恢复显示详细状态
         network_status.value = f"网络访问状态：{results['network_status']}"
         google_region.value = f"Google地区：{results['google_region']}"
         github_speed.value = f"GitHub连接速度：{results['github_speed']}"
         academic_name = results['academic_name']
-        academic_info.value = f"学术机构：{academic_name if academic_name else '未登录'}"
+        
+        # 更新网络状态容器的内容
+        status_controls = [
+            ft.Row([
+                ft.Text("网络状态", size=18, weight=ft.FontWeight.BOLD),
+                network_loading
+            ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
+            network_status,
+            google_region,
+            github_speed,
+        ]
+        
+        if academic_name:
+            status_controls.append(ft.Text(f"学术机构：{academic_name}", size=16))
+            
+        network_status_container.content = ft.Column(
+            controls=status_controls,
+            spacing=10
+        )
 
-        # 重新启用刷新按钮并隐藏进度环
+        # 隐藏加载指示器并重新启用刷新按钮
         refresh_btn.disabled = False
-        progress_ring.visible = False
+        ip_loading.visible = False
+        network_loading.visible = False
         page.update()
 
     # 创建按钮
@@ -209,52 +236,118 @@ async def main(page: ft.Page):
         "刷新",
         on_click=refresh_data,
         bgcolor="#2E7D32",  # GREEN_600
-        color="white"
+        color="white",
+        style=ft.ButtonStyle(
+            shape=ft.RoundedRectangleBorder(radius=8),
+        ),
     )
 
     toggle_ip_btn = ft.ElevatedButton(
         "切换IP显示模式",
         on_click=toggle_ip_display,
         bgcolor="#1565C0",  # BLUE_600
-        color="white"
+        color="white",
+        style=ft.ButtonStyle(
+            shape=ft.RoundedRectangleBorder(radius=8),
+        ),
     )
 
     copy_ip_btn = ft.ElevatedButton(
         "复制IP地址",
         on_click=copy_ip_to_clipboard,
         bgcolor="#1565C0",  # BLUE_600
-        color="white"
+        color="white",
+        style=ft.ButtonStyle(
+            shape=ft.RoundedRectangleBorder(radius=8),
+        ),
+    )
+    
+    # 创建IP信息容器
+    ip_info_container = ft.Container(
+        content=ft.Column([
+            ft.Row([
+                ft.Text("IP地址信息", size=18, weight=ft.FontWeight.BOLD),
+                ip_loading
+            ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
+            ip_info,
+            ft.Row(
+                [toggle_ip_btn, copy_ip_btn],
+                spacing=10
+            )
+        ]),
+        padding=15
+    )
+    
+    # 创建网络状态容器
+    network_status_container = ft.Container(
+        content=ft.Column(
+            controls=[
+                ft.Row([
+                    ft.Text("网络状态", size=18, weight=ft.FontWeight.BOLD),
+                    network_loading
+                ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
+                network_status,
+                google_region,
+                github_speed,
+                academic_info,
+            ],
+            spacing=10
+        ),
+        padding=15
     )
 
     # 构建界面
-    page.add(
-        ft.Column(
+    content_area = ft.Container(
+        content=ft.Column(
             controls=[
-                ft.Text("网络状态检测工具", size=30, weight=ft.FontWeight.BOLD),
-                ft.Row([progress_ring], alignment=ft.MainAxisAlignment.CENTER),
-                ft.Container(
-                    content=ft.Column([
-                        ip_info,
-                        ft.Row([toggle_ip_btn, copy_ip_btn])
-                    ]),
-                    border=ft.border.all(1, "#BDBDBD"),  # GREY_400
-                    border_radius=10,
-                    padding=10
+                # IP信息卡片
+                ft.Card(
+                    content=ip_info_container,
                 ),
-                ft.Container(
-                    content=ft.Column([
-                        network_status,
-                        google_region,
-                        github_speed,
-                        academic_info
-                    ]),
-                    border=ft.border.all(1, "#BDBDBD"),  # GREY_400
-                    border_radius=10,
-                    padding=10
+                
+                # 网络状态卡片
+                ft.Card(
+                    content=network_status_container,
                 ),
-                ft.Row([refresh_btn], alignment=ft.MainAxisAlignment.CENTER)
+                
+                # 刷新按钮
+                ft.Container(
+                    content=refresh_btn,
+                    alignment=ft.alignment.center,
+                    padding=ft.padding.only(top=20)
+                )
             ],
-            spacing=20
+            spacing=20,
+        ),
+        padding=20,
+    )
+
+    page.add(
+        ft.SafeArea(
+            content=ft.Column(
+                controls=[
+                    # 顶部标题栏
+                    ft.Container(
+                        content=ft.Text(
+                            "网络状态检测工具",
+                            size=24,
+                            weight=ft.FontWeight.BOLD,
+                            color="white"
+                        ),
+                        bgcolor="#1565C0",
+                        padding=20,
+                        width=float("inf"),
+                        alignment=ft.alignment.center,
+                    ),
+                    
+                    # 主要内容区域
+                    ft.Container(
+                        content=content_area,
+                        alignment=ft.alignment.center,  # 居中显示内容区域
+                    )
+                ],
+                spacing=0,
+            )
         )
     )
 
