@@ -26,6 +26,10 @@ jobs:
       with:
         xcode-version: latest-stable
         
+    - name: Install iOS platform
+      run: |
+        xcodebuild -downloadPlatform iOS
+        
     - name: Build iOS App
       run: |
         pip install -r requirements.txt
