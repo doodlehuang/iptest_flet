@@ -11,7 +11,7 @@ dependencies = [
     "flet",
     "aiohttp",
     "beautifulsoup4",
-    "yaml"
+    "pyyaml"
 ]
 
 [tool.flet]
