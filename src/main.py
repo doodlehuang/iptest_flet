@@ -579,26 +579,29 @@ async def main(page: ft.Page):
             page.title = lang_manager.get_text("app.title")
             page.add(
                 copy_banner,
-                ft.Column(
-                    controls=[
-                        ft.Container(
-                            content=ft.Text(
-                                lang_manager.get_text("app.title"),
-                                size=24,
-                                weight=ft.FontWeight.BOLD,
-                                color="white"
+                ft.SafeArea(
+                    ft.Column(
+                        controls=[
+                            ft.Container(
+                                content=ft.Text(
+                                    lang_manager.get_text("app.title"),
+                                    size=24,
+                                    weight=ft.FontWeight.BOLD,
+                                    color="white"
+                                ),
+                                bgcolor="#1565C0",
+                                padding=20,
+                                width=float("inf"),
+                                alignment=ft.alignment.center
                             ),
-                            bgcolor="#1565C0",
-                            padding=20,
-                            width=float("inf"),
-                            alignment=ft.alignment.center
-                        ),
-                        ft.Container(
-                            content=content_area,
-                            alignment=ft.alignment.center
-                        )
-                    ],
-                    spacing=0
+                            ft.Container(
+                                content=content_area,
+                                alignment=ft.alignment.center
+                            )
+                        ],
+                        spacing=0
+                    ),
+                    expand=True
                 )
             )
 
@@ -699,7 +702,12 @@ async def main(page: ft.Page):
     )
 
     # 添加警告界面
-    page.add(warning_screen)
+    page.add(
+        ft.SafeArea(
+            warning_screen,
+            expand=True
+        )
+    )
     page.update()
 
 ft.app(target=main, view=ft.AppView.FLET_APP) 
