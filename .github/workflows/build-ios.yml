@@ -1,11 +1,6 @@
 name: Build iOS App
 
 on:
-  release:
-    types: [created]
-    tags:
-      - 'v*'
-      - 'dev*'
   workflow_dispatch:
 
 jobs:
