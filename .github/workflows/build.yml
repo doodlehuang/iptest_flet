@@ -165,7 +165,6 @@ jobs:
 
     - name: Flet Build APK
       run: |
-        flutter config --no-analytics
         flet build apk --verbose --no-rich-output
 
     - name: Upload APK Artifact
