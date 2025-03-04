@@ -1,0 +1,81 @@
+app:
+  title: "網路狀態偵測工具"
+  
+warning:
+  title: "警告"
+  message: "警告：在某些國家/地區使用此工具可能存在風險。請確認您瞭解相關風險後再繼續。"
+  restricted_countries_prefix: "請勿在以下國家/地區使用此工具："
+  agreement: '點選「繼續」，即表示您已知悉風險並同意繼續測試，且您同意承擔由此帶來的任何後果。'
+  continue: "繼續"
+  cancel: "取消"
+
+main:
+  ip_info:
+    title: "IP資訊"
+    single: "IP位址："
+    domestic: "IP位址（面向國內網站）："
+    foreign: "IP位址（面向國外網站）："
+    toggle: "切換IP顯示模式"
+    copy: "複製IP位址"
+    copy_success: "IP位址已複製到剪貼簿"
+    copy_confirm: "確定"
+    location: "所在地"
+    isp: "網路服務供應商"
+  
+  network_status:
+    title: "網路狀態"
+    status_prefix: "網路存取狀態："
+    status_free: "正常"
+    status_restricted: "受限"
+    google_region_prefix: "Google區域："
+    github_speed_prefix: "GitHub連線速度："
+    academic_prefix: "學術機構："
+    test_terminated: "測試已中止"
+    refresh: "重新整理"
+
+  google:
+    global: "全球"
+
+errors:
+  timeout: "取得IP位址時請求逾時"
+  ip_error_prefix: "取得IP位址時發生錯誤: "
+  google_timeout: "請求逾時"
+  google_error: "取得Google區域時發生錯誤"
+  github_timeout: "請求逾時"
+  github_error: "無法連線至GitHub"
+
+restricted_warning:
+  prefix: "偵測到您目前位於"
+  suffix: "。由於該國家/地區對網路有嚴格管控，為了您的安全，測試已中止。"
+
+network_test:
+  testing: "正在測試網路..."
+  success: "測試成功"
+  failed: "測試失敗"
+  error: "發生錯誤"
+  restricted: "您所在的地區 ({country}) 可能存在網路限制"
+  unrestricted: "您所在的地區網路正常"
+  speed_unit: "毫秒"
+
+buttons:
+  start: "開始測試"
+  stop: "停止"
+  settings: "設定"
+  refresh: "重新整理"
+  ok: "確定"
+
+settings:
+  title: "設定"
+  language: "語言"
+  theme: "佈景主題"
+  dark: "深色"
+  light: "淺色"
+
+copy:
+  success: "複製成功！"
+
+countries:
+  TM: "土庫曼"
+  IR: "伊朗"
+  KP: "北韓"
+  MM: "緬甸" 

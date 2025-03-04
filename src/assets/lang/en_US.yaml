@@ -1,0 +1,81 @@
+app:
+  title: "Network Status Detection Tool"
+  
+warning:
+  title: "Warning"
+  message: "Warning: Using this tool in certain countries/regions may involve risks. Please confirm that you understand the risks before continuing."
+  restricted_countries_prefix: "Please do not use this tool in the following countries/regions: "
+  agreement: 'By clicking "Continue", you acknowledge the risks and agree to proceed with the test, accepting any consequences that may arise.'
+  continue: "Continue"
+  cancel: "Cancel"
+
+main:
+  ip_info:
+    title: "IP Address Information"
+    single: "IP Address: "
+    domestic: "IP Address (Domestic Websites): "
+    foreign: "IP Address (Foreign Websites): "
+    toggle: "Toggle IP Display Mode"
+    copy: "Copy IP Address"
+    copy_success: "IP Address copied to clipboard"
+    copy_confirm: "OK"
+    location: "Location"
+    isp: "Internet Service Provider"
+  
+  network_status:
+    title: "Network Status"
+    status_prefix: "Network Access Status: "
+    status_free: "Free"
+    status_restricted: "Restricted"
+    google_region_prefix: "Google Region: "
+    github_speed_prefix: "GitHub Connection Speed: "
+    academic_prefix: "Academic Institutions: "
+    test_terminated: "Test Terminated"
+    refresh: "Refresh"
+
+  google:
+    global: "Global"
+
+errors:
+  timeout: "Request timeout while fetching IP address"
+  ip_error_prefix: "Error occurred while fetching IP address: "
+  google_timeout: "Request timeout"
+  google_error: "Error occurred while fetching Google region"
+  github_timeout: "Request timeout"
+  github_error: "Unable to connect to GitHub"
+
+restricted_warning:
+  prefix: "You are currently located in"
+  suffix: ". Due to strict internet controls in this country/region, the test has been terminated for your safety."
+
+network_test:
+  testing: "Testing network..."
+  success: "Test successful"
+  failed: "Test failed"
+  error: "An error occurred"
+  restricted: "Your region ({country}) may have network restrictions"
+  unrestricted: "Your region has normal network access"
+  speed_unit: "ms"
+
+buttons:
+  start: "Start Test"
+  stop: "Stop"
+  settings: "Settings"
+  refresh: "Refresh"
+  ok: "OK"
+
+settings:
+  title: "Settings"
+  language: "Language"
+  theme: "Theme"
+  dark: "Dark"
+  light: "Light"
+
+copy:
+  success: "Copy successful!"
+
+countries:
+  TM: "Turkmenistan"
+  IR: "Iran"
+  KP: "North Korea"
+  MM: "Myanmar" 

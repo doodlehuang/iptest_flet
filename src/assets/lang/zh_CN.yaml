@@ -1,0 +1,81 @@
+app:
+  title: "网络状态检测工具"
+  
+warning:
+  title: "警告"
+  message: "警告：在某些国家/地区使用此工具可能存在风险。请确认您了解相关风险后再继续。"
+  restricted_countries_prefix: "请不要在以下国家/地区使用此工具："
+  agreement: '点击"继续"，即代表您已知晓风险并同意继续测试，且您同意承担由此带来的任何后果。'
+  continue: "继续"
+  cancel: "取消"
+
+main:
+  ip_info:
+    title: "IP信息"
+    single: "IP地址："
+    domestic: "IP地址（面向国内网站）："
+    foreign: "IP地址（面向国外网站）："
+    toggle: "切换IP显示模式"
+    copy: "复制IP地址"
+    copy_success: "IP地址已复制到剪贴板"
+    copy_confirm: "确定"
+    location: "位置"
+    isp: "网络服务提供商"
+  
+  network_status:
+    title: "网络状态"
+    status_prefix: "网络访问状态："
+    status_free: "自由"
+    status_restricted: "受限"
+    google_region_prefix: "Google地区："
+    github_speed_prefix: "GitHub连接速度："
+    academic_prefix: "学术机构："
+    test_terminated: "测试已终止"
+    refresh: "刷新"
+
+  google:
+    global: "全球"
+
+errors:
+  timeout: "获取IP地址时请求超时"
+  ip_error_prefix: "获取IP地址时出现错误: "
+  google_timeout: "请求超时"
+  google_error: "获取Google地区时出现错误"
+  github_timeout: "请求超时"
+  github_error: "无法连接到GitHub"
+
+restricted_warning:
+  prefix: "检测到您当前位于"
+  suffix: "。由于该国家/地区对互联网有严格管控，为了您的安全，测试已终止。"
+
+network_test:
+  testing: "正在测试网络..."
+  success: "测试成功"
+  failed: "测试失败"
+  error: "发生错误"
+  restricted: "您所在的地区 ({country}) 可能存在网络限制"
+  unrestricted: "您所在的地区网络正常"
+  speed_unit: "毫秒"
+
+buttons:
+  start: "开始测试"
+  stop: "停止"
+  settings: "设置"
+  refresh: "刷新"
+  ok: "确定"
+
+settings:
+  title: "设置"
+  language: "语言"
+  theme: "主题"
+  dark: "深色"
+  light: "浅色"
+
+copy:
+  success: "复制成功！"
+
+countries:
+  TM: "土库曼斯坦"
+  IR: "伊朗"
+  KP: "朝鲜"
+  MM: "缅甸" 

@@ -1,7 +1,7 @@
 [project]
 name = "iptest"
-version = "1.0.2"
-description = "IP地址测试工具"
+version = "2.0.0"
+description = "Network testing tool by Doodle Huang"
 readme = "README.md"
 requires-python = ">=3.9"
 authors = [
@@ -17,7 +17,7 @@ dependencies = [
 org = "com.doodlehuang"
 product = "IPTest by Doodle Huang"
 company = "Doodle Huang"
-copyright = "Copyright (C) 2024 by Doodle Huang"
+copyright = "Copyright (C) 2025 by Doodle Huang"
 
 [tool.flet.app]
 path = "src"
