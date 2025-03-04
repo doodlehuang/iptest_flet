@@ -61,7 +61,7 @@ class AsyncWorker:
         for url in urls:
             for _ in range(2):
                 try:
-                    async with self.session.head(url, timeout=5) as response:
+                    async with self.session.head(url, timeout=2) as response:
                         if response.status in [204, 200]:
                             success_count += 1
                             break
@@ -119,15 +119,48 @@ class AsyncWorker:
         except Exception:
             return None
 
-    async def run_all_checks(self):
-        results = {
-            "ip_info": await self.get_ip_info(),
-            "network_status": await self.check_network_freedom(),
-            "google_region": await self.extract_prefdomain_url(),
-            "github_speed": await self.raw_githubusercontent_speed_test(),
-            "academic_name": await self.get_auto_login_name()
+    async def run_all_checks(self, update_callback=None):
+        await self.create_session()
+        tasks = {
+            "ip_info": asyncio.create_task(self.get_ip_info()),
+            "network_status": asyncio.create_task(self.check_network_freedom()),
+            "google_region": asyncio.create_task(self.extract_prefdomain_url()),
+            "github_speed": asyncio.create_task(self.raw_githubusercontent_speed_test()),
+            "academic_name": asyncio.create_task(self.get_auto_login_name())
         }
-        await self.close_session()
+        
+        results = {}
+        try:
+            while tasks:
+                # 等待任意一个任务完成
+                done, pending = await asyncio.wait(
+                    tasks.values(),
+                    return_when=asyncio.FIRST_COMPLETED
+                )
+                
+                # 处理完成的任务
+                for task in done:
+                    # 找到对应的键
+                    for key, value in list(tasks.items()):
+                        if value == task:
+                            try:
+                                results[key] = task.result()
+                                if update_callback:
+                                    await update_callback(key, results[key])
+                            except Exception as e:
+                                results[key] = f"错误: {str(e)}"
+                                if update_callback:
+                                    await update_callback(key, results[key])
+                            del tasks[key]
+                            break
+        
+        finally:
+            # 取消所有未完成的任务
+            for task in tasks.values():
+                task.cancel()
+            
+            await self.close_session()
+        
         return results
 
 async def main(page: ft.Page):
@@ -146,7 +179,7 @@ async def main(page: ft.Page):
     network_status = ft.Text(size=16)
     google_region = ft.Text(size=16)
     github_speed = ft.Text(size=16)
-    academic_info = ft.Container(visible=False)
+    academic_info = ft.Text(size=16, visible=False)
     
     # 创建加载指示器
     ip_loading = ft.ProgressRing(width=20, height=20, visible=False)
@@ -187,6 +220,48 @@ async def main(page: ft.Page):
             page.set_clipboard(f"国内IP: {ip_data['domestic_ip']}, 国外IP: {ip_data['foreign_ip']}")
         page.show_snack_bar(ft.SnackBar(content=ft.Text("IP地址已复制到剪贴板")))
 
+    async def update_single_result(key, value):
+        nonlocal ip_data
+        if key == "ip_info":
+            ip_data = value
+            update_ip_display()
+        elif key == "network_status":
+            network_status.value = f"网络访问状态：{value}"
+        elif key == "google_region":
+            google_region.value = f"Google地区：{value}"
+        elif key == "github_speed":
+            github_speed.value = f"GitHub连接速度：{value}"
+        elif key == "academic_name":
+            if value:
+                academic_info.value = f"学术机构：{value}"
+                academic_info.visible = True
+            else:
+                academic_info.visible = False
+                academic_info.value = ""
+        
+        # 更新网络状态容器的内容
+        status_controls = [
+            ft.Row([
+                ft.Text("网络状态", size=18, weight=ft.FontWeight.BOLD),
+                network_loading
+            ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
+        ]
+        
+        if network_status.value:
+            status_controls.append(network_status)
+        if google_region.value:
+            status_controls.append(google_region)
+        if github_speed.value:
+            status_controls.append(github_speed)
+        if academic_info.visible:
+            status_controls.append(academic_info)
+            
+        network_status_container.content = ft.Column(
+            controls=status_controls,
+            spacing=10
+        )
+        page.update()
+
     async def refresh_data(e):
         # 禁用刷新按钮并显示加载指示器
         refresh_btn.disabled = True
@@ -199,45 +274,12 @@ async def main(page: ft.Page):
         google_region.value = ""
         github_speed.value = ""
         academic_info.value = ""
+        academic_info.visible = False
         page.update()
 
         # 创建worker并运行检查
         worker = AsyncWorker()
-        results = await worker.run_all_checks()
-
-        # 更新显示结果
-        nonlocal ip_data
-        ip_data = results["ip_info"]
-        update_ip_display()
-        
-        # 恢复显示详细状态
-        network_status.value = f"网络访问状态：{results['network_status']}"
-        google_region.value = f"Google地区：{results['google_region']}"
-        github_speed.value = f"GitHub连接速度：{results['github_speed']}"
-        academic_name = results['academic_name']
-        
-        # 更新网络状态容器的内容
-        status_controls = [
-            ft.Row([
-                ft.Text("网络状态", size=18, weight=ft.FontWeight.BOLD),
-                network_loading
-            ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
-            network_status,
-            google_region,
-            github_speed,
-        ]
-        
-        if academic_name:
-            academic_info.value = f"学术机构：{academic_name}"
-            academic_info.visible = True
-            status_controls.append(academic_info)
-        else:
-            academic_info.visible = False
-            
-        network_status_container.content = ft.Column(
-            controls=status_controls,
-            spacing=10
-        )
+        await worker.run_all_checks(update_callback=update_single_result)
 
         # 隐藏加载指示器并重新启用刷新按钮
         refresh_btn.disabled = False
