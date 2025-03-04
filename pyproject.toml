@@ -10,7 +10,8 @@ authors = [
 dependencies = [
     "flet",
     "aiohttp",
-    "beautifulsoup4"
+    "beautifulsoup4",
+    "yaml"
 ]
 
 [tool.flet]
