@@ -123,7 +123,7 @@ jobs:
 
     - name: Flet Build Windows
       run: |
-        flet build windows
+        flet build windows --no-rich-output
     - name: Upload Windows Artifact
       uses: actions/upload-artifact@v4.3.4
       with:
