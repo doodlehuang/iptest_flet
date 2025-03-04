@@ -1,0 +1,24 @@
+[project]
+name = "iptest"
+version = "1.0.0"
+description = "IP地址测试工具"
+readme = "README.md"
+requires-python = ">=3.9"
+authors = [
+    { name = "Doodle Huang" }
+]
+dependencies = [
+    "flet",
+    "aiohttp",
+    "beautifulsoup4"
+]
+
+[tool.flet]
+org = "com.doodlehuang"
+product = "IPTest by Doodle Huang"
+company = "Doodle Huang"
+copyright = "Copyright (C) 2024 by Doodle Huang"
+
+[tool.flet.app]
+path = "src"
+module = "main" 
