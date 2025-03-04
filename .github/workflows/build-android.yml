@@ -1,8 +1,8 @@
 name: Build Android App
 
 on:
-  push:
-    branches: [ main ]
+  release:
+    types: [created]
     tags:
       - 'v*'
       - 'dev*'
