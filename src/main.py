@@ -132,7 +132,9 @@ class AsyncWorker:
         urls = [
             'https://www.v2ex.com/generate_204',
             'https://www.youtube.com/generate_204',
-            'https://am.i.mullvad.net/ip'
+            'https://mullvad.net/en',
+            'https://www.theguardian.com/international',
+            'https://bridges.torproject.org'
         ]
         success_count = 0
 
