@@ -5,8 +5,7 @@ on:
     branches: [ main ]
     tags:
       - 'v*'
-  pull_request:
-    branches: [ main ]
+      - 'dev*'
   workflow_dispatch:
 
 jobs:
@@ -34,8 +33,19 @@ jobs:
       run: |
         pip install -r requirements.txt
         flet build ipa
+        echo "Listing build/ipa directory contents:"
         ls -la build/ipa
-        mv build/ipa/app-release.ipa app-release.ipa
+        echo "Listing build/ipa/Runner.xcarchive contents:"
+        ls -la build/ipa/Runner.xcarchive
+        # 尝试查找实际的 ipa 文件
+        find build -name "*.ipa" -type f
+        # 如果找到 ipa 文件，则移动它
+        if [ -f build/ipa/Runner.xcarchive/Products/Applications/Runner.ipa ]; then
+          mv build/ipa/Runner.xcarchive/Products/Applications/Runner.ipa app-release.ipa
+        else
+          echo "Error: Could not find the IPA file"
+          exit 1
+        fi
         
     - name: Upload IPA Artifact
       uses: actions/upload-artifact@v4

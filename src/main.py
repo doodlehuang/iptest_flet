@@ -21,16 +21,16 @@ class AsyncWorker:
     async def get_ip_info(self):
         await self.create_session()
         try:
-            async with self.session.get('https://4.ipw.cn', timeout=2) as response:
+            async with self.session.get('https://4.ipw.cn', timeout=5) as response:
                 domestic_ip = await response.text()
                 domestic_ip = domestic_ip.strip()
 
-            async with self.session.get('http://ip-api.com/line?fields=query', timeout=2) as response:
+            async with self.session.get('http://ip-api.com/line?fields=query', timeout=5) as response:
                 foreign_ip = await response.text()
                 foreign_ip = foreign_ip.strip()
 
             async def get_ip_details(ip):
-                async with self.session.get(f'http://ip-api.com/json/{ip}') as response:
+                async with self.session.get(f'http://ip-api.com/json/{ip}', timeout=5) as response:
                     return await response.json()
 
             domestic_ip_info = await get_ip_details(domestic_ip)
@@ -45,6 +45,8 @@ class AsyncWorker:
                     "foreign_ip": foreign_ip,
                     "foreign_region": f'{foreign_ip_info["regionName"]}, {foreign_ip_info["country"]}'
                 }
+        except asyncio.TimeoutError:
+            return {"error": "获取IP地址时请求超时"}
         except Exception as e:
             return {"error": f"获取IP地址时出现错误: {e}"}
 
@@ -59,10 +61,12 @@ class AsyncWorker:
         for url in urls:
             for _ in range(2):
                 try:
-                    async with self.session.head(url, timeout=0.5) as response:
+                    async with self.session.head(url, timeout=5) as response:
                         if response.status in [204, 200]:
                             success_count += 1
                             break
+                except asyncio.TimeoutError:
+                    continue
                 except:
                     continue
 
@@ -70,7 +74,7 @@ class AsyncWorker:
 
     async def extract_prefdomain_url(self):
         try:
-            async with self.session.get('https://www.google.com') as response:
+            async with self.session.get('https://www.google.com', timeout=5) as response:
                 content = await response.text()
             soup = BeautifulSoup(content, 'html.parser')
             link = soup.find('a', href=lambda href: href and 'setprefdomain' in href)
@@ -84,28 +88,34 @@ class AsyncWorker:
                 else:
                     return prefdom
             return "全球"
+        except asyncio.TimeoutError:
+            return "请求超时"
         except Exception:
             return "获取Google地区时出现错误"
 
     async def raw_githubusercontent_speed_test(self):
         try:
             start = datetime.datetime.now()
-            async with self.session.head('https://raw.githubusercontent.com', timeout=2) as response:
+            async with self.session.head('https://raw.githubusercontent.com', timeout=5) as response:
                 end = datetime.datetime.now()
                 time_without_proxy = (end - start).total_seconds() * 1000
                 return f"{time_without_proxy:.2f} 毫秒"
+        except asyncio.TimeoutError:
+            return "请求超时"
         except Exception as e:
             return f"GitHub连接测试出错: {e}"
 
     async def get_auto_login_name(self):
         try:
             headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
-            async with self.session.get('https://login.cnki.net/TopLogin/api/loginapi/IpLoginFlush', headers=headers) as response:
+            async with self.session.get('https://login.cnki.net/TopLogin/api/loginapi/IpLoginFlush', headers=headers, timeout=5) as response:
                 text = await response.text()
                 result = json.loads(text[1:-1])
                 if result.get('IsSuccess'):
                     return result.get('ShowName')
                 return None
+        except asyncio.TimeoutError:
+            return "请求超时"
         except Exception:
             return None
 
@@ -188,7 +198,7 @@ async def main(page: ft.Page):
         network_status.value = ""
         google_region.value = ""
         github_speed.value = ""
-        academic_info.visible = False
+        academic_info.value = ""
         page.update()
 
         # 创建worker并运行检查
@@ -218,7 +228,11 @@ async def main(page: ft.Page):
         ]
         
         if academic_name:
-            status_controls.append(ft.Text(f"学术机构：{academic_name}", size=16))
+            academic_info.value = f"学术机构：{academic_name}"
+            academic_info.visible = True
+            status_controls.append(academic_info)
+        else:
+            academic_info.visible = False
             
         network_status_container.content = ft.Column(
             controls=status_controls,
