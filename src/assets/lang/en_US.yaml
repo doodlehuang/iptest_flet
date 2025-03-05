@@ -6,6 +6,7 @@ warning:
   message: "Warning: Using this tool in certain countries/regions may involve risks. Please confirm that you understand the risks before continuing."
   restricted_countries_prefix: "Please do not use this tool in the following countries/regions: "
   agreement: 'By clicking "Continue", you acknowledge the risks and agree to proceed with the test, accepting any consequences that may arise.'
+  disclaimer: "All judgments and expressions in this app are for reference only and do not constitute any legal or practical operation advice, nor are they any accusations against any country/region or individual/organization/institution/enterprise."
   continue: "Continue"
   cancel: "Cancel"
 
@@ -13,8 +14,8 @@ main:
   ip_info:
     title: "IP Address Information"
     single: "IP Address: "
-    domestic: "IP Address (Domestic Websites): "
-    foreign: "IP Address (Foreign Websites): "
+    domestic: "IP Address (Towards Chinese Websites): "
+    foreign: "IP Address (Towards Foreign Websites): "
     toggle: "Toggle IP Display Mode"
     copy: "Copy IP Address"
     copy_success: "IP Address copied to clipboard"
@@ -35,6 +36,21 @@ main:
 
   google:
     global: "Global"
+
+  streaming:
+    title: "Streaming Service Test"
+    netflix:
+      network_error: "Network Connection Failed"
+      originals_only: "Netflix Originals Only"
+      unavailable: "Unavailable"
+      available: "Available (Region: {region})"
+      error: "Test Failed (Error: {error})"
+    youtube:
+      network_error: "Network Connection Failed"
+      unavailable: "Unavailable"
+      unavailable_cn: "Unavailable (Region: CN)"
+      available: "Available (Region: {region})"
+      error: "Test Failed (Page Error)"
 
 errors:
   timeout: "Request timeout while fetching IP address"

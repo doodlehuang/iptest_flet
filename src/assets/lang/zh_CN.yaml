@@ -5,7 +5,8 @@ warning:
   title: "警告"
   message: "警告：在某些国家/地区使用此工具可能存在风险。请确认您了解相关风险后再继续。"
   restricted_countries_prefix: "请不要在以下国家/地区使用此工具："
-  agreement: '点击"继续"，即代表您已知晓风险并同意继续测试，且您同意承担由此带来的任何后果。'
+  agreement: '点击「继续」，即代表您已知晓风险并同意继续测试，且您同意承担由此带来的任何后果。'
+  disclaimer: "该应用中的所有判断和表达仅供参考，不构成任何法律或实际操作建议，也不是对任何国家/地区或个人/组织/机构/企业的任何指控。"
   continue: "继续"
   cancel: "取消"
 
@@ -13,8 +14,8 @@ main:
   ip_info:
     title: "IP信息"
     single: "IP地址："
-    domestic: "IP地址（面向国内网站）："
-    foreign: "IP地址（面向国外网站）："
+    domestic: "IP地址（面向中国网站）："
+    foreign: "IP地址（面向境外网站）："
     toggle: "切换IP显示模式"
     copy: "复制IP地址"
     copy_success: "IP地址已复制到剪贴板"
@@ -35,6 +36,21 @@ main:
 
   google:
     global: "全球"
+
+  streaming:
+    title: "流媒体解锁检测"
+    netflix:
+      network_error: "网络连接失败"
+      originals_only: "仅限 Netflix 自制剧"
+      unavailable: "未解锁"
+      available: "已解锁（区域：{region}）"
+      error: "检测失败（错误：{error}）"
+    youtube:
+      network_error: "网络连接失败"
+      unavailable: "未解锁"
+      unavailable_cn: "未解锁（区域：CN）"
+      available: "已解锁（区域：{region}）"
+      error: "检测失败（页面错误）"
 
 errors:
   timeout: "获取IP地址时请求超时"

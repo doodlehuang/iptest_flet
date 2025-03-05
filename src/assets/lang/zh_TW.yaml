@@ -6,6 +6,7 @@ warning:
   message: "警告：在某些國家/地區使用此工具可能存在風險。請確認您瞭解相關風險後再繼續。"
   restricted_countries_prefix: "請勿在以下國家/地區使用此工具："
   agreement: '點選「繼續」，即表示您已知悉風險並同意繼續測試，且您同意承擔由此帶來的任何後果。'
+  disclaimer: "此應用程式中的所有判斷和表達僅供參考，不構成任何法律或實際操作建議，也不是對任何國家/地區或個人/組織/機構/企業的任何指控。"
   continue: "繼續"
   cancel: "取消"
 
@@ -13,8 +14,8 @@ main:
   ip_info:
     title: "IP資訊"
     single: "IP位址："
-    domestic: "IP位址（面向國內網站）："
-    foreign: "IP位址（面向國外網站）："
+    domestic: "IP位址（面向中國網站）："
+    foreign: "IP位址（面向境外網站）："
     toggle: "切換IP顯示模式"
     copy: "複製IP位址"
     copy_success: "IP位址已複製到剪貼簿"
@@ -25,7 +26,7 @@ main:
   network_status:
     title: "網路狀態"
     status_prefix: "網路存取狀態："
-    status_free: "正常"
+    status_free: "自由" # 不要修改这个
     status_restricted: "受限"
     google_region_prefix: "Google區域："
     github_speed_prefix: "GitHub連線速度："
@@ -35,6 +36,21 @@ main:
 
   google:
     global: "全球"
+
+  streaming:
+    title: "串流平台解鎖測試"
+    netflix:
+      network_error: "網路連線失敗"
+      originals_only: "僅限 Netflix 自製影集"
+      unavailable: "未解鎖"
+      available: "已解鎖（區域：{region}）"
+      error: "檢測失敗（錯誤：{error}）"
+    youtube:
+      network_error: "網路連線失敗"
+      unavailable: "未解鎖"
+      unavailable_cn: "未解鎖（區域：CN）"
+      available: "已解鎖（區域：{region}）"
+      error: "檢測失敗（頁面錯誤）"
 
 errors:
   timeout: "取得IP位址時請求逾時"

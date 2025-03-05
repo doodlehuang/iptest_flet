@@ -72,6 +72,18 @@ class AsyncWorker:
             }
             for code in self.RESTRICTED_COUNTRY_CODES
         }
+        # 定义通用请求头
+        self.browser_headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
+            'Accept-Language': 'en-US,en;q=0.9',
+            'sec-ch-ua': '"Google Chrome";v="125", "Chromium";v="125", "Not.A/Brand";v="24"',
+            'sec-ch-ua-mobile': '?0',
+            'sec-ch-ua-platform': '"Windows"',
+            'sec-fetch-site': 'none',
+            'sec-fetch-mode': 'navigate',
+            'sec-fetch-user': '?1',
+            'sec-fetch-dest': 'document'
+        }
 
     async def __aenter__(self):
         await self.create_session()
@@ -199,6 +211,106 @@ class AsyncWorker:
         except Exception:
             return None
 
+    async def check_netflix(self):
+        """检测Netflix解锁状态"""
+        try:
+            # 测试两个不同的Netflix内容（LEGO Ninjago和Breaking Bad）
+            urls = [
+                'https://www.netflix.com/title/81280792',
+                'https://www.netflix.com/title/70143836'
+            ]
+            
+            # 更新请求头以完全匹配shell脚本
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
+                'accept-language': 'en-US,en;q=0.9',
+                'sec-ch-ua': '"Google Chrome";v="125", "Chromium";v="125", "Not.A/Brand";v="24"',
+                'sec-ch-ua-mobile': '?0',
+                'sec-ch-ua-platform': '"Windows"',
+                'sec-fetch-site': 'none',
+                'sec-fetch-mode': 'navigate',
+                'sec-fetch-user': '?1',
+                'sec-fetch-dest': 'document',
+                'host': 'www.netflix.com'
+            }
+            
+            results = []
+            for url in urls:
+                try:
+                    async with self.session.get(
+                        url,
+                        headers=headers,
+                        timeout=10,
+                        allow_redirects=True  # 允许跟随重定向
+                    ) as response:
+                        results.append(response.status)
+                except:
+                    results.append(0)
+
+            # 分析结果
+            if 0 in results:
+                return self.lang_manager.get_text("main.streaming.netflix.network_error")
+            
+            if all(code == 404 for code in results):
+                return self.lang_manager.get_text("main.streaming.netflix.originals_only")
+            
+            if 403 in results:
+                return self.lang_manager.get_text("main.streaming.netflix.unavailable")
+            
+            if 200 in results:
+                # 获取区域信息
+                async with self.session.get(
+                    'https://www.netflix.com/',
+                    headers=headers,
+                    timeout=10,
+                    allow_redirects=True
+                ) as response:
+                    text = await response.text()
+                    import re
+                    region_match = re.search(r'"id":"([A-Z]{2})"', text)
+                    region = region_match.group(1) if region_match else "UNKNOWN"
+                    return self.lang_manager.get_text("main.streaming.netflix.available").format(region=region)
+            
+            return self.lang_manager.get_text("main.streaming.netflix.error").format(error=f"{results[0]}_{results[1]}")
+            
+        except Exception as e:
+            return self.lang_manager.get_text("main.streaming.netflix.error").format(error=str(e))
+
+    async def check_youtube_premium(self):
+        """检测YouTube Premium解锁状态"""
+        try:
+            headers = self.browser_headers.copy()
+            headers['cookie'] = 'YSC=FSCWhKo2Zgw; VISITOR_PRIVACY_METADATA=CgJERRIEEgAgYQ%3D%3D; PREF=f7=4000; __Secure-YEC=CgtRWTBGTFExeV9Iayjele2yBjIKCgJERRIEEgAgYQ%3D%3D; SOCS=CAISOAgDEitib3FfaWRlbnRpdHlmcm9udGVuZHVpc2VydmVyXzIwMjQwNTI2LjAxX3AwGgV6aC1DTiACGgYIgMnpsgY; VISITOR_INFO1_LIVE=Di84mAIbgKY; __Secure-BUCKET=CGQ'
+            
+            async with self.session.get(
+                'https://www.youtube.com/premium',
+                headers=headers,
+                timeout=10
+            ) as response:
+                text = await response.text()
+                
+                # 检查是否重定向到google.cn
+                if 'www.google.cn' in text:
+                    return self.lang_manager.get_text("main.streaming.youtube.unavailable_cn")
+                
+                # 检查是否不可用
+                if 'Premium is not available in your country' in text.lower():
+                    return self.lang_manager.get_text("main.streaming.youtube.unavailable")
+                
+                # 获取区域信息
+                import re
+                region_match = re.search(r'"INNERTUBE_CONTEXT_GL"\s*:\s*"([^"]+)"', text)
+                region = region_match.group(1) if region_match else "UNKNOWN"
+                
+                # 检查是否可用
+                if 'ad-free' in text.lower():
+                    return self.lang_manager.get_text("main.streaming.youtube.available").format(region=region)
+                
+                return self.lang_manager.get_text("main.streaming.youtube.error")
+                
+        except Exception as e:
+            return self.lang_manager.get_text("main.streaming.youtube.network_error")
+
     async def run_all_checks(self, update_callback=None):
         # 首先只获取IP信息
         try:
@@ -222,20 +334,21 @@ class AsyncWorker:
                 await update_callback("ip_info", {"error": str(e)})
             return {}
 
-        # 如果不在受限制国家，继续执行其他检查
-        task_factories = {
+        # 如果不在受限制国家，先执行基本网络检查
+        results = {"ip_info": ip_info}
+        basic_tasks = {
             "network_status": lambda: self.check_network_freedom(),
             "google_region": lambda: self.extract_prefdomain_url(),
             "github_speed": lambda: self.raw_githubusercontent_speed_test(),
             "academic_name": lambda: self.get_auto_login_name()
         }
         
+        # 执行基本网络检查
         active_tasks = {
             key: asyncio.create_task(factory())
-            for key, factory in task_factories.items()
+            for key, factory in basic_tasks.items()
         }
         
-        results = {"ip_info": ip_info}
         try:
             while active_tasks:
                 done, pending = await asyncio.wait(
@@ -249,6 +362,16 @@ class AsyncWorker:
                         results[key] = task.result()
                         if update_callback:
                             await update_callback(key, results[key])
+                            
+                            # 如果是网络状态检查完成，且网络自由，则开始流媒体检测
+                            if key == "network_status" and self.lang_manager.get_text("main.network_status.status_free") in results[key]:
+                                # 创建流媒体检测任务
+                                streaming_tasks = {
+                                    "netflix": lambda: self.check_netflix(),
+                                    "youtube": lambda: self.check_youtube_premium()
+                                }
+                                for streaming_key, streaming_factory in streaming_tasks.items():
+                                    active_tasks[streaming_key] = asyncio.create_task(streaming_factory())
                     except Exception as e:
                         results[key] = f"错误: {str(e)}"
                         if update_callback:
@@ -265,7 +388,7 @@ class AsyncWorker:
 
 async def main(page: ft.Page):
     page.title = ""
-    page.window.height = 700
+    page.window.height = 800
     page.theme_mode = ft.ThemeMode.LIGHT
     page.padding = 0
 
@@ -281,12 +404,72 @@ async def main(page: ft.Page):
     ip_loading = ft.ProgressRing(width=20, height=20, visible=False)
     network_loading = ft.ProgressRing(width=20, height=20, visible=False)
     
+    # 创建流媒体测试的加载指示器
+    netflix_loading = ft.ProgressRing(width=16, height=16, visible=False)
+    youtube_loading = ft.ProgressRing(width=16, height=16, visible=False)
+    
     # 创建状态显示控件
     ip_info = ft.Text("", selectable=True)
     network_status = ft.Text("")
     google_region = ft.Text("")
     github_speed = ft.Text("")
     academic_info = ft.Text("", visible=False)
+    
+    # 创建流媒体测试状态显示控件
+    netflix_status = ft.Text("", size=14)
+    youtube_status = ft.Text("", size=14)
+    
+    # 创建流媒体测试容器
+    streaming_container = ft.Container(
+        content=ft.Column(
+            controls=[
+                ft.Text(
+                    lang_manager.get_text("main.streaming.title"),
+                    size=18,
+                    weight=ft.FontWeight.BOLD
+                ),
+                ft.Column([
+                    # Netflix检测行
+                    ft.Row([
+                        ft.Container(
+                            content=ft.Text("Netflix", size=14),
+                            width=120
+                        ),
+                        ft.Container(
+                            content=ft.Row(
+                                controls=[
+                                    netflix_status,
+                                    netflix_loading
+                                ],
+                                spacing=10
+                            ),
+                            expand=True
+                        )
+                    ], alignment=ft.MainAxisAlignment.START),
+                    # YouTube Premium检测行
+                    ft.Row([
+                        ft.Container(
+                            content=ft.Text("YouTube Premium", size=14),
+                            width=120
+                        ),
+                        ft.Container(
+                            content=ft.Row(
+                                controls=[
+                                    youtube_status,
+                                    youtube_loading
+                                ],
+                                spacing=10
+                            ),
+                            expand=True
+                        )
+                    ], alignment=ft.MainAxisAlignment.START)
+                ], spacing=10)
+            ],
+            spacing=10
+        ),
+        padding=15,
+        visible=False  # 初始状态为隐藏
+    )
 
     # 用于存储IP信息的变量
     ip_data = {}
@@ -373,7 +556,7 @@ async def main(page: ft.Page):
         if "ip" in ip_data:
             page.set_clipboard(ip_data['ip'])
         else:
-            page.set_clipboard(f"{lang_manager.get_text('main.ip_info.domestic')} {ip_data['domestic_ip']}, {lang_manager.get_text('main.ip_info.foreign')} {ip_data['foreign_ip']}")
+            page.set_clipboard(f"{lang_manager.get_text('main.ip_info.domestic')}{ip_data['domestic_ip']}, {lang_manager.get_text('main.ip_info.foreign')}{ip_data['foreign_ip']}")
         copy_banner.open = True
         page.update()
 
@@ -417,19 +600,50 @@ async def main(page: ft.Page):
             ip_loading.visible = False
             toggle_ip_btn.visible = "error" not in ip_data
             copy_ip_btn.visible = "error" not in ip_data
+            page.update()
         elif key == "network_status":
             network_status.value = f"{lang_manager.get_text('main.network_status.status_prefix')}{value}"
+            is_network_free = lang_manager.get_text("main.network_status.status_free") in value
+            
+            # 只在首次设置网络状态为自由时显示流媒体测试卡片和启动检测
+            if is_network_free and not streaming_container.visible:
+                streaming_container.visible = True
+                netflix_status.value = ""
+                youtube_status.value = ""
+                netflix_status.visible = True
+                youtube_status.visible = True
+                netflix_loading.visible = True
+                youtube_loading.visible = True
+            elif not is_network_free:
+                streaming_container.visible = False
+                netflix_loading.visible = False
+                youtube_loading.visible = False
+            page.update()
         elif key == "google_region":
             google_region.value = f"{lang_manager.get_text('main.network_status.google_region_prefix')}{value}"
+            page.update()
         elif key == "github_speed":
             github_speed.value = f"{lang_manager.get_text('main.network_status.github_speed_prefix')}{value}"
+            page.update()
         elif key == "academic_name":
             academic_info.visible = bool(value)
             academic_info.value = f"{lang_manager.get_text('main.network_status.academic_prefix')}{value}" if value else ""
+            page.update()
+        elif key == "netflix":
+            netflix_loading.visible = False
+            netflix_status.value = value
+            netflix_status.visible = True
+            page.update()
+        elif key == "youtube":
+            youtube_loading.visible = False
+            youtube_status.value = value
+            youtube_status.visible = True
+            page.update()
 
-        # 检查是否所有网络状态项目都已加载
-        if check_all_network_items_loaded():
+        # 只在所有基本网络检查项目完成时显示一次完成消息
+        if check_all_network_items_loaded() and network_loading.visible:
             network_loading.visible = False
+            page.update()
         
         # 更新网络状态UI
         update_network_status_ui()
@@ -440,6 +654,7 @@ async def main(page: ft.Page):
         refresh_btn.disabled = True
         ip_loading.visible = True
         network_loading.visible = True
+        streaming_container.visible = False
         
         # 隐藏操作按钮
         toggle_ip_btn.visible = False
@@ -452,6 +667,12 @@ async def main(page: ft.Page):
         github_speed.value = ""
         academic_info.value = ""
         academic_info.visible = False
+        
+        # 重置流媒体测试状态
+        netflix_status.value = ""
+        youtube_status.value = ""
+        netflix_loading.visible = False
+        youtube_loading.visible = False
         page.update()
 
         # 创建worker并运行检查
@@ -523,6 +744,11 @@ async def main(page: ft.Page):
                     content=network_status_container
                 ),
                 
+                # 流媒体测试卡片
+                ft.Card(
+                    content=streaming_container
+                ),
+                
                 # 刷新按钮
                 ft.Container(
                     content=refresh_btn,
@@ -553,9 +779,10 @@ async def main(page: ft.Page):
                 "\n".join([f"• {lang_manager.get_text(f'countries.{code}')}" for code in AsyncWorker.RESTRICTED_COUNTRY_CODES]) + "\n\n" +
                 lang_manager.get_text("warning.agreement")
             )
-            warning_content[3].controls[0].value = lang_manager.get_text("settings.language")
-            warning_content[4].controls[0].text = lang_manager.get_text("warning.continue")
-            warning_content[4].controls[1].text = lang_manager.get_text("warning.cancel")
+            warning_content[3].content.content.value = lang_manager.get_text("warning.disclaimer")
+            warning_content[4].controls[0].value = lang_manager.get_text("settings.language")
+            warning_content[5].controls[0].text = lang_manager.get_text("warning.continue")
+            warning_content[5].controls[1].text = lang_manager.get_text("warning.cancel")
             
             # 更新按钮文本
             refresh_btn.text = lang_manager.get_text("buttons.refresh")
@@ -567,6 +794,8 @@ async def main(page: ft.Page):
                 ip_info_container.content.controls[0].controls[0].value = lang_manager.get_text("main.ip_info.title")
             if network_status_container:
                 network_status_container.content.controls[0].controls[0].value = lang_manager.get_text("main.network_status.title")
+            if streaming_container:
+                streaming_container.content.controls[0].value = lang_manager.get_text("main.streaming.title")
             
             # 更新页面
             page.update()
@@ -578,10 +807,10 @@ async def main(page: ft.Page):
             # 更新页面标题
             page.title = lang_manager.get_text("app.title")
             page.add(
-                copy_banner,
                 ft.SafeArea(
                     ft.Column(
                         controls=[
+                            copy_banner,
                             ft.Container(
                                 content=ft.Text(
                                     lang_manager.get_text("app.title"),
@@ -590,16 +819,22 @@ async def main(page: ft.Page):
                                     color="white"
                                 ),
                                 bgcolor="#1565C0",
-                                padding=20,
+                                padding=15,
                                 width=float("inf"),
                                 alignment=ft.alignment.center
                             ),
                             ft.Container(
-                                content=content_area,
-                                alignment=ft.alignment.center
+                                content=ft.Column(
+                                    controls=[content_area],
+                                    scroll=ft.ScrollMode.AUTO,
+                                    expand=True
+                                ),
+                                alignment=ft.alignment.top_center,
+                                expand=True
                             )
                         ],
-                        spacing=0
+                        spacing=0,
+                        expand=True
                     ),
                     expand=True
                 )
@@ -650,6 +885,23 @@ async def main(page: ft.Page):
                             lang_manager.get_text("warning.agreement"),
                             text_align=ft.TextAlign.CENTER,
                             size=16
+                        ),
+                        ft.Container(
+                            content=ft.Container(
+                                content=ft.Text(
+                                    lang_manager.get_text("warning.disclaimer"),
+                                    text_align=ft.TextAlign.CENTER,
+                                    size=14,
+                                    weight=ft.FontWeight.BOLD,
+                                    color=ft.Colors.GREY_700,
+                                ),
+                                padding=15,
+                                bgcolor=ft.Colors.ORANGE_50,
+                                border=ft.border.all(1, ft.Colors.ORANGE_200),
+                                border_radius=8,
+                            ),
+                            padding=ft.padding.symmetric(horizontal=20),
+                            margin=ft.margin.only(bottom=10, top=5)
                         ),
                         ft.Row(
                             controls=[
